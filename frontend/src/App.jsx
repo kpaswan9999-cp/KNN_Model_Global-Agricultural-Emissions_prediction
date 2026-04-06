@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import Prediction from './pages/Prediction';
 import Analytics from './pages/Analytics';
 import About from './pages/About';
+import History from './pages/History';
 import ParticleBackground from './components/ParticleBackground';
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/predict" element={<Prediction />} />
+            <Route path="/history" element={<History />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/about" element={<About />} />
           </Routes>

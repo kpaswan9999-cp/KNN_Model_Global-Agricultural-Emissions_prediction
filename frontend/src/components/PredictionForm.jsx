@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { getMetadata, predictEmissions } from '../api';
+import { saveToHistory } from '../utils/history';
 import { motion } from 'framer-motion';
 
-export default function PredictionForm({ onResult }) {
+export default function PredictionForm({ onResult, initialData: propInitialData }) {
   const [metadata, setMetadata] = useState(null);
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(true);
@@ -22,7 +23,11 @@ export default function PredictionForm({ onResult }) {
           }
         }
       });
-      setFormData(initialData);
+      if (propInitialData) {
+        setFormData(propInitialData);
+      } else {
+        setFormData(initialData);
+      }
       setLoading(false);
     }).catch(err => {
       setError('Failed to load model metadata.');
@@ -42,6 +47,7 @@ export default function PredictionForm({ onResult }) {
       const result = await predictEmissions(formData);
       if(result.success) {
         onResult(result);
+        saveToHistory(result, formData);
       } else {
         setError(result.error);
       }

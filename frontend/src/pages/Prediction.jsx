@@ -1,10 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import PredictionForm from '../components/PredictionForm';
 import ResultCard from '../components/ResultCard';
 
 export default function Prediction() {
-  const [result, setResult] = useState(null);
+  const location = useLocation();
+  const [result, setResult] = useState(location.state?.result || null);
+
+  // If we came from history with a result, clear the state so it doesn't persist on refresh
+  useEffect(() => {
+    if (location.state?.result) {
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   return (
     <div className="container mx-auto px-6 py-12">
@@ -22,7 +31,10 @@ export default function Prediction() {
              <p className="text-text/60">Enter the agricultural parameters to predict the dominant emission element using our trained K-Nearest Neighbors model.</p>
           </div>
           <div className="glass-panel p-8 rounded-3xl border border-secondary/20">
-            <PredictionForm onResult={setResult} />
+            <PredictionForm 
+              onResult={setResult} 
+              initialData={location.state?.inputs} 
+            />
           </div>
         </motion.div>
 
