@@ -4,8 +4,6 @@
 
 EcoPredict AI is a sophisticated Machine Learning platform designed to predict and analyze agricultural greenhouse gas emissions across the globe. Using a K-Nearest Neighbors (KNN) classification model, the application identifies dominant emission types (CO2, CH4, N2O) based on historical data from the Food and Agriculture Organization (FAO).
 
-![EcoPredict Dashboard](https://raw.githubusercontent.com/kpaswan9999-cp/KNN_Model_Global-Agricultural-Emissions_prediction/main/frontend/public/favicon.png)
-
 ## 🚀 LIVE DEPLOYMENT
 - **Frontend (Vercel)**: [https://knn-model-global-agricultural-emiss.vercel.app/](https://knn-model-global-agricultural-emiss.vercel.app/)
 - **Backend (Render)**: [https://knn-model-global-agricultural-emissions.onrender.com/](https://knn-model-global-agricultural-emissions.onrender.com/)
