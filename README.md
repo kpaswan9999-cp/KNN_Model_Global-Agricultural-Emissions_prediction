@@ -12,6 +12,7 @@ EcoPredict AI is a sophisticated Machine Learning platform designed to predict a
 
 ## 🔥 Key Features
 - **Real-time AI Inference**: Predict emission types using a trained KNN model with high accuracy.
+- **Time Series Forecasting**: Project future emission values for specific countries/items up to 2031 using linear trend analysis.
 - **Interactive Analytics**: Visualize global emission trends, top-emitting countries, and elemental distributions via dynamic charts.
 - **Persistent History**: Track your previous predictions locally in your browser with the ability to "View Again" or audit your analysis.
 - **Eco-Techno Aesthetic**: A premium dark-mode UI featuring glassmorphism, advanced particle animations, and high-fidelity custom assets.
@@ -30,7 +31,7 @@ EcoPredict AI is a sophisticated Machine Learning platform designed to predict a
 
 ### **Backend**
 - **Flask** (Python REST API)
-- **Scikit-Learn** (KNN Classifier & Preprocessing)
+- **Scikit-Learn** (KNN Classifier & Linear Regression)
 - **Pandas/NumPy** (Data manipulation)
 - **Gunicorn** (Production-grade GSGI server)
 
