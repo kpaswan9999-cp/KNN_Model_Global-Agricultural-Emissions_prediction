@@ -75,6 +75,12 @@ def get_forecast():
     area = request.args.get('area')
     item = request.args.get('item')
     element = request.args.get('element')
+    years = request.args.get('years', 10)
+
+    try:
+        years = int(years)
+    except:
+        years = 10
 
     if not area or not item or not element:
         return jsonify({'success': False, 'error': 'Missing required parameters: area, item, element'})
@@ -100,9 +106,9 @@ def get_forecast():
         for year, val in zip(subset['Year'], subset['Value'])
     ]
 
-    # Forecast next 10 years
+    # Forecast next N years
     last_year = int(subset['Year'].max())
-    forecast_years = np.array(range(last_year + 1, last_year + 11)).reshape(-1, 1)
+    forecast_years = np.array(range(last_year + 1, last_year + 1 + years)).reshape(-1, 1)
     forecast_values = model.predict(forecast_years)
 
     forecast = [

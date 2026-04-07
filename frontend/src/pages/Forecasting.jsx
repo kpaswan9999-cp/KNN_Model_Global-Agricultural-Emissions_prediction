@@ -11,7 +11,8 @@ export default function Forecasting() {
   const [formData, setFormData] = useState({
     area: '',
     item: '',
-    element: ''
+    element: '',
+    years: 10
   });
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -103,12 +104,28 @@ export default function Forecasting() {
               </select>
             </div>
 
+            <div className="space-y-4">
+              <label className="text-sm font-medium text-text/80">Years to Predict</label>
+              <div className="relative">
+                <input 
+                  type="number"
+                  min="1"
+                  max="50"
+                  className="w-full bg-surface border border-white/10 rounded-xl px-4 py-3 text-text focus:outline-none focus:border-accent transition-colors"
+                  value={formData.years}
+                  onChange={(e) => setFormData({...formData, years: parseInt(e.target.value) || 1})}
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-text/30">Years</span>
+              </div>
+              <p className="text-[10px] text-text/40 italic">Default is 10 years. Max recommended: 50.</p>
+            </div>
+
             <button 
               onClick={handleRunForecast}
               disabled={loading}
               className="w-full py-4 rounded-xl bg-accent text-background font-bold hover:shadow-[0_0_20px_rgba(244,162,97,0.4)] transition-all flex items-center justify-center gap-2 group"
             >
-              {loading ? 'Crunching Numbers...' : 'Generate 10-Year Forecast'}
+              {loading ? 'Crunching Numbers...' : `Generate ${formData.years}-Year Forecast`}
             </button>
 
             {error && (
@@ -124,7 +141,7 @@ export default function Forecasting() {
               How it works
             </div>
             <p className="text-xs text-text/50 leading-relaxed">
-              Our forecasting engine uses Linear Regression to compute the mathematical trajectory of greenhouse gas data. It analyzes historical variance to project where emission values will likely sit up to 2031.
+              Our forecasting engine uses Linear Regression to compute the mathematical trajectory of greenhouse gas data. It analyzes historical variance to project where emission values will likely sit in the coming years.
             </p>
           </div>
         </motion.div>
@@ -191,7 +208,7 @@ export default function Forecasting() {
                       strokeWidth={3} 
                       strokeDasharray="5 5"
                       dot={{ r: 4, fill: '#F4A261' }}
-                      data={data.filter(d => d.type === 'Forecast' || d.year === res?.history[res.history.length-1]?.year)}
+                      data={data.filter(d => d.type === 'Forecast' || d.year === data.find(p => p.type === 'Historical' && p.year === Math.max(...data.filter(x => x.type === 'Historical').map(x => x.year)))?.year)}
                     />
                   </LineChart>
                 </ResponsiveContainer>
