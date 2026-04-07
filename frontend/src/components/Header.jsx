@@ -8,7 +8,7 @@ export default function Header() {
 
   const links = [
     { to: '/', label: 'Home', icon: Leaf },
-    { to: '/predict', label: 'Prediction', icon: Activity },
+    { to: '/predict', label: 'Predict', icon: Activity },
     { to: '/history', label: 'History', icon: History },
     { to: '/analytics', label: 'Analytics', icon: BarChart2 },
     { to: '/about', label: 'About', icon: Info },
