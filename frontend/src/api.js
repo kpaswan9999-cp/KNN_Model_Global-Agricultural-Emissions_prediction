@@ -26,4 +26,9 @@ export const predictEmissions = async (features) => {
   return response.data;
 };
 
+export const getForecast = async (params) => {
+  const response = await api.get('/forecast', { params });
+  return response.data;
+};
+
 export default api;

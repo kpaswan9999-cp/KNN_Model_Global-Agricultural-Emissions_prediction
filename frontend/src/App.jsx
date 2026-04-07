@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import Header from './components/Header';
 import Home from './pages/Home';
 import Prediction from './pages/Prediction';
+import Forecasting from './pages/Forecasting';
 import Analytics from './pages/Analytics';
 import About from './pages/About';
 import History from './pages/History';
@@ -18,6 +19,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/predict" element={<Prediction />} />
+            <Route path="/forecasting" element={<Forecasting />} />
             <Route path="/history" element={<History />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/about" element={<About />} />

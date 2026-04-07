@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Leaf, Activity, BarChart2, Info, History } from 'lucide-react';
+import { Leaf, Activity, BarChart2, Info, History, TrendingUp } from 'lucide-react';
 
 export default function Header() {
   const location = useLocation();
@@ -9,6 +9,7 @@ export default function Header() {
   const links = [
     { to: '/', label: 'Home', icon: Leaf },
     { to: '/predict', label: 'Predict', icon: Activity },
+    { to: '/forecasting', label: 'Forecasting', icon: TrendingUp },
     { to: '/history', label: 'History', icon: History },
     { to: '/analytics', label: 'Analytics', icon: BarChart2 },
     { to: '/about', label: 'About', icon: Info },

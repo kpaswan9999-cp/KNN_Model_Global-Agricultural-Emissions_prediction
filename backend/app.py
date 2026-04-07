@@ -5,6 +5,7 @@ import json
 import pandas as pd
 import numpy as np
 import os
+from sklearn.linear_model import LinearRegression
 
 app = Flask(__name__)
 CORS(app)
@@ -67,6 +68,56 @@ def get_stats():
         }
     }
     return jsonify(stats)
+
+@app.route('/api/forecast', methods=['GET'])
+def get_forecast():
+    """Predicts future emission values for a specific Area, Item, and Element."""
+    area = request.args.get('area')
+    item = request.args.get('item')
+    element = request.args.get('element')
+
+    if not area or not item or not element:
+        return jsonify({'success': False, 'error': 'Missing required parameters: area, item, element'})
+
+    # Filter data
+    mask = (DF['Area'] == area) & (DF['Item'] == item) & (DF['Element'] == element)
+    subset = DF[mask].sort_values('Year')
+
+    if len(subset) < 2:
+        return jsonify({'success': False, 'error': 'Insufficient data for forecasting (at least 2 points required)'})
+
+    # Prepare data for regression
+    X = subset['Year'].values.reshape(-1, 1)
+    y = subset['Value'].values
+
+    # Fit model
+    model = LinearRegression()
+    model.fit(X, y)
+
+    # Historical data points
+    history = [
+        {'year': int(year), 'value': float(val)} 
+        for year, val in zip(subset['Year'], subset['Value'])
+    ]
+
+    # Forecast next 10 years
+    last_year = int(subset['Year'].max())
+    forecast_years = np.array(range(last_year + 1, last_year + 11)).reshape(-1, 1)
+    forecast_values = model.predict(forecast_years)
+
+    forecast = [
+        {'year': int(year[0]), 'value': float(val)} 
+        for year, val in zip(forecast_years, forecast_values)
+    ]
+
+    return jsonify({
+        'success': True,
+        'area': area,
+        'item': item,
+        'element': element,
+        'history': history,
+        'forecast': forecast
+    })
 
 @app.route('/api/predict', methods=['POST'])
 def predict():
