@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getMetadata, getForecast } from '../api';
 import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
-import { TrendingUp, Info } from 'lucide-react';
+import { TrendingUp, Info, Table as TableIcon, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
 
 export default function Forecasting() {
   const [metadata, setMetadata] = useState(null);
@@ -17,6 +17,7 @@ export default function Forecasting() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const resultsRef = useRef(null);
 
   useEffect(() => {
     getMetadata().then(setMetadata).catch(() => setError('Failed to load metadata.'));
@@ -32,14 +33,37 @@ export default function Forecasting() {
     try {
       const res = await getForecast(formData);
       if (res.success) {
-        // Merge history and forecast for the chart
-        const lastHistoryPoint = res.history[res.history.length - 1];
-        const combined = [
-          ...res.history.map(point => ({ ...point, type: 'Historical' })),
-          { ...lastHistoryPoint, type: 'Forecast' }, // Start forecast from last history point for bridge
-          ...res.forecast.map(point => ({ ...point, type: 'Forecast' }))
+        // Create a unified data structure for Recharts
+        // This prevents the "dots at the start" bug
+        const lastHistPoint = res.history[res.history.length - 1];
+        
+        const chartData = [
+          ...res.history.map(p => ({
+            year: p.year,
+            historical: p.value,
+            forecast: null
+          })),
+          ...res.forecast.map((p, i) => ({
+            year: p.year,
+            historical: i === 0 ? lastHistPoint.value : null, // Bridge the gap
+            forecast: p.value
+          }))
         ];
-        setData(combined);
+
+        // Prepare table data including growth calculation
+        const tableData = res.forecast.map((p, i) => {
+          const prevValue = i === 0 ? lastHistPoint.value : res.forecast[i-1].value;
+          const diff = p.value - prevValue;
+          const percent = ((diff / prevValue) * 100).toFixed(2);
+          return { ...p, diff, percent };
+        });
+
+        setData({ chart: chartData, table: tableData, history: res.history });
+        
+        // Scroll to results
+        setTimeout(() => {
+          resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
       } else {
         setError(res.error);
       }
@@ -52,7 +76,7 @@ export default function Forecasting() {
 
   return (
     <div className="container mx-auto px-6 py-12">
-      <div className="flex flex-col lg:flex-row gap-12">
+      <div className="flex flex-col lg:flex-row gap-12 mb-16">
         {/* Controls Sidebar */}
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
@@ -117,7 +141,6 @@ export default function Forecasting() {
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-text/30">Years</span>
               </div>
-              <p className="text-[10px] text-text/40 italic">Default is 10 years. Max recommended: 50.</p>
             </div>
 
             <button 
@@ -141,7 +164,7 @@ export default function Forecasting() {
               How it works
             </div>
             <p className="text-xs text-text/50 leading-relaxed">
-              Our forecasting engine uses Linear Regression to compute the mathematical trajectory of greenhouse gas data. It analyzes historical variance to project where emission values will likely sit in the coming years.
+              Our regression model compute the mathematical trajectory of data points from 1990 to 2021. The "bridge" point allows the forecast to maintain continuity with the most recent record.
             </p>
           </div>
         </motion.div>
@@ -159,56 +182,46 @@ export default function Forecasting() {
                    <h2 className="text-xl font-bold">{formData.area}</h2>
                    <p className="text-text/50 text-sm">{formData.item} • {formData.element}</p>
                 </div>
-                <div className="flex gap-4 text-xs">
+                <div className="flex gap-6 text-[10px] uppercase tracking-wider font-bold">
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-secondary"></div>
-                    <span className="text-text/70">Historical</span>
+                    <div className="w-2 h-2 rounded-full bg-secondary"></div>
+                    <span className="text-text/50">Historical</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-accent border-2 border-accent border-dashed bg-transparent"></div>
-                    <span className="text-text/70">Projection</span>
+                    <div className="w-2 h-2 rounded-full bg-accent animate-pulse"></div>
+                    <span className="text-text/50">Projection</span>
                   </div>
                 </div>
               </div>
 
               <div className="flex-grow">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                  <LineChart data={data.chart} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                    <XAxis 
-                      dataKey="year" 
-                      stroke="#E8F5E9" 
-                      opacity={0.5} 
-                      fontSize={12}
-                    />
-                    <YAxis 
-                      stroke="#E8F5E9" 
-                      opacity={0.5} 
-                      fontSize={12}
-                      label={{ value: 'Emissions (kt)', angle: -90, position: 'insideLeft', style: { fill: 'rgba(255,255,255,0.3)', fontSize: '10px' } }}
-                    />
+                    <XAxis dataKey="year" stroke="#E8F5E9" opacity={0.3} fontSize={10} />
+                    <YAxis stroke="#E8F5E9" opacity={0.3} fontSize={10} />
                     <Tooltip 
                       contentStyle={{ backgroundColor: '#0A1612', border: '1px solid #2D6A4F', borderRadius: '12px' }}
                       itemStyle={{ fontSize: '12px' }}
                     />
                     <Line 
                       type="monotone" 
-                      dataKey="value" 
+                      dataKey="historical" 
                       stroke="#2D6A4F" 
                       strokeWidth={3} 
                       dot={false}
-                      strokeDasharray={(d) => d?.type === 'Forecast' ? '5 5' : '0'} // Note: Recharts doesn't native support segmented dash per data point easily like this
+                      activeDot={{ r: 6, fill: '#2D6A4F' }}
                       connectNulls
                     />
-                    {/* Secondary line for forecast for better visual separation */}
                     <Line 
                       type="monotone" 
-                      dataKey="value" 
+                      dataKey="forecast" 
                       stroke="#F4A261" 
                       strokeWidth={3} 
                       strokeDasharray="5 5"
                       dot={{ r: 4, fill: '#F4A261' }}
-                      data={data.filter(d => d.type === 'Forecast' || d.year === data.find(p => p.type === 'Historical' && p.year === Math.max(...data.filter(x => x.type === 'Historical').map(x => x.year)))?.year)}
+                      activeDot={{ r: 6, fill: '#F4A261' }}
+                      connectNulls
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -221,11 +234,91 @@ export default function Forecasting() {
               </div>
               <div>
                 <h3 className="text-xl font-semibold mb-2">Ready to Visualize?</h3>
-                <p className="text-text/50 max-w-sm">Select a specific area and item to see the mathematical trend lines for future agricultural emissions.</p>
+                <p className="text-text/50 max-w-sm">Select parameters to see the year-wise forecast for agricultural emissions levels.</p>
               </div>
             </div>
           )}
         </motion.div>
+      </div>
+
+      {/* Results Table Section */}
+      <div ref={resultsRef} className="pt-8">
+        <AnimatePresence>
+          {data && (
+            <motion.div 
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-8"
+            >
+              <div className="flex items-center justify-between">
+                 <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-2xl bg-accent/10 text-accent">
+                       <TableIcon size={24} />
+                    </div>
+                    <h2 className="text-2xl font-bold text-white">Year-Wise Prediction Details</h2>
+                 </div>
+                 <div className="text-text/50 text-sm italic">
+                    Based on Linear Regression analysis
+                 </div>
+              </div>
+
+              <div className="glass-panel rounded-[2rem] overflow-hidden border border-white/5 shadow-2xl">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-white/5 border-b border-white/10 uppercase text-[10px] tracking-[0.2em] font-bold text-text/60">
+                      <th className="px-8 py-6">Forecast Year</th>
+                      <th className="px-8 py-6 text-right">Predicted Value (kt)</th>
+                      <th className="px-8 py-6 text-center">Trend Status</th>
+                      <th className="px-8 py-6 text-right">Relative Change (%)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.table.map((row, idx) => (
+                      <motion.tr 
+                        key={row.year}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.05 }}
+                        className="border-b border-white/5 hover:bg-white/[0.02] transition-colors group"
+                      >
+                        <td className="px-8 py-6 font-bold text-white group-hover:text-accent transition-colors">
+                          {row.year}
+                        </td>
+                        <td className="px-8 py-6 text-right font-mono text-text/90">
+                          {row.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </td>
+                        <td className="px-8 py-6">
+                           <div className="flex items-center justify-center gap-2">
+                             {row.diff > 0.01 ? (
+                               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 text-red-400 text-xs font-bold ring-1 ring-red-500/20">
+                                 <ArrowUpRight size={14} /> Higher
+                               </div>
+                             ) : row.diff < -0.01 ? (
+                               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/10 text-green-400 text-xs font-bold ring-1 ring-green-500/20">
+                                 <ArrowDownRight size={14} /> Lower
+                               </div>
+                             ) : (
+                               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-text/60 text-xs font-bold ring-1 ring-white/10">
+                                 <Minus size={14} /> Stable
+                               </div>
+                             )}
+                           </div>
+                        </td>
+                        <td className={`px-8 py-6 text-right font-bold ${row.percent > 0 ? 'text-red-400/80' : 'text-green-400/80'}`}>
+                          {row.percent > 0 ? '+' : ''}{row.percent}%
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              
+              <div className="p-8 rounded-[2rem] glass-panel border border-dashed border-white/10 text-center text-text/40 text-sm">
+                Statistical predictions are calculated as kt (kilotonnes). The trend represents the year-over-year mathematical variance in the projection.
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
